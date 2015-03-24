@@ -1,28 +1,20 @@
 package com.neat.pinboard;
 
-import java.util.LinkedList;
-
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.SparseArray;
 
-public class Content {
-	private int totalpacket;
-    private int totalImagePacket;
-    private String fullcontent;
-	SparseArray<String> packetList = new SparseArray<String>();
-    SparseArray<LinkedList<Byte> > ImgArray = new SparseArray<LinkedList<Byte>>();
-    private boolean isShowed = false;
+import java.util.LinkedList;
 
-	public Content(){
-        totalpacket = -1;
+/**
+ * Created by SAM on 2015/3/24.
+ */
+public class Image {
+
+    SparseArray<LinkedList<Byte> > ImgArray = new SparseArray<LinkedList<Byte>>();
+    private int totalImagePacket;
+    public Image(){
         totalImagePacket =-1;
-        fullcontent="";
-    }
-    public void setTotalpacket(int totalpacket){
-        if(this.totalpacket==-1) {
-            this.totalpacket = totalpacket;
-        }
     }
     public void setTotalImagePacket(int totalImagePacket){
         if(this.totalImagePacket==-1) {
@@ -44,39 +36,13 @@ public class Content {
         return  checkComplete();
 
     }
-	public boolean setpacket(int num,String packet){
-		if(packetList.size() == totalpacket || packetList.get(num-1) !=null ){
-			return false;
-		}
-		packetList.put(num-1, packet);
-        return  checkComplete();
-		
-	}
     public boolean checkComplete(){
-        if(packetList.size() == totalpacket /*&& ImgArray.size() == totalImagePacket*/){
+        if(ImgArray.size() == totalImagePacket){
             return true;
         }else{
             return false;
         }
 
-    }
-
-    public void setShowed(boolean isShowed) {
-        this.isShowed = isShowed;
-    }
-
-    public boolean getShowed(){
-        boolean isShowed = this.isShowed;
-        return  isShowed;
-
-    }
-
-    public String getFullcontent(){
-        for(int i=0;i<packetList.size();i++){
-            fullcontent  += packetList.get(i);
-        }
-
-        return fullcontent;
     }
     public Bitmap getImage(){
         Bitmap bitmap;
@@ -95,5 +61,4 @@ public class Content {
 
         return bitmap;
     }
-
 }

@@ -74,6 +74,7 @@ public class BleService extends Service{
     private LinkedList<BluetoothGatt> gattList = new LinkedList<BluetoothGatt>();
     int mId = 0;
     private HashMap<String, SparseArray<Content> > devicemap = new HashMap<String, SparseArray<Content> >();
+    private HashMap<String, Image > deviceImageMap = new HashMap<String, Image >();
     private HashMap<String, UpdateContent> updatemap =new  HashMap<String, UpdateContent>();
     Timer timer;
     //boolean update = false;
@@ -155,29 +156,45 @@ public class BleService extends Service{
         	}
         	if(devicemap.get(address) == null){
         		SparseArray<Content> templist = new SparseArray<Content>();
+                deviceImageMap.put(address,new Image());
         		devicemap.put(address, templist);
         	}
 
-            SparseArray<Content> templist = devicemap.get(address);
-            if(templist.get(contentNum) == null){
-                Content tempcontent = new Content();
-                templist.put(contentNum,tempcontent);
-            }
-            Content content;
-            if(scanRecord[9]<0){
-                content = templist.get(contentNum);
-                content.setTotalImagePacket(tempTotalPacket);
-                lastFrag = content.setImgPacket(tempCurrentPacket, scanRecord);
+
+            if(scanRecord[9]==-1){
+                Image tempImage = deviceImageMap.get(address);
+                tempImage.setTotalImagePacket(tempTotalPacket);
+                tempImage.setImgPacket(tempCurrentPacket, scanRecord);
+
             }else{
-                content = templist.get(contentNum);
-                content.setTotalpacket(tempTotalPacket);
-                lastFrag = content.setpacket(tempCurrentPacket, packet);
+                SparseArray<Content> templist = devicemap.get(address);
+                if(templist.get(contentNum) == null){
+                    Content tempcontent = new Content();
+                    templist.put(contentNum,tempcontent);
+                }
+                Content content;
+                if(scanRecord[9]<0){
+                    content = templist.get(contentNum);
+                    content.setTotalImagePacket(tempTotalPacket);
+                    lastFrag = content.setImgPacket(tempCurrentPacket, scanRecord);
+                }else{
+                    content = templist.get(contentNum);
+                    content.setTotalpacket(tempTotalPacket);
+                    lastFrag = content.setpacket(tempCurrentPacket, packet);
+                }
+                Image tempImage = deviceImageMap.get(address);
+                Log.d("who","img:"+String.valueOf(tempImage.checkComplete()));
+                Log.d("who","content:"+String.valueOf(content.checkComplete()));
+                Log.d("who","show:"+String.valueOf(content.getShowed()));
+
+                if(content.checkComplete() && tempImage.checkComplete() && content.getShowed()==false){
+                    content.setShowed(true);
+                    showNotification(content.getFullcontent(),tempImage.getImage());
+                }
             }
 
-        	if(lastFrag){
-                Log.d("lastFrag",String.valueOf(lastFrag));
-        		showNotification(content.getFullcontent(),content.getImage());
-        	}
+
+
         }
     }
 	

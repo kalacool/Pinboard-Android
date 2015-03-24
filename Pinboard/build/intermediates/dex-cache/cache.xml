@@ -9,18 +9,18 @@
         <dex dex="C:\Android\Pinboard\app\build\intermediates\pre-dexed\debug\classes-df6274dd1533d0e8503292f3db574102c160274b.jar" />
     </item>
     <item
-        jar="C:\Android\Pinboard\app\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\libs\internal_impl-21.0.3.jar"
+        jar="C:\Users\SAM\Documents\GitHub\Pinboard-Android\Pinboard\app\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\libs\internal_impl-21.0.3.jar"
         jumboMode="false"
         revision="21.1.2"
         sha1="01ec05bfbafcc07646ba813000bf2ef11742dd03">
-        <dex dex="C:\Android\Pinboard\app\build\intermediates\pre-dexed\debug\internal_impl-21.0.3-9b174e347476c40fb7d4e2b6968ea18e0e57bcc3.jar" />
+        <dex dex="C:\Users\SAM\Documents\GitHub\Pinboard-Android\Pinboard\app\build\intermediates\pre-dexed\debug\internal_impl-21.0.3-cbc0e72d4f3655ce52edd4e153495884e93fef45.jar" />
     </item>
     <item
-        jar="C:\Android\Pinboard\app\libs\volley.jar"
+        jar="C:\Users\SAM\Documents\GitHub\Pinboard-Android\Pinboard\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\21.0.3\classes.jar"
         jumboMode="false"
         revision="21.1.2"
-        sha1="60a85ca72cf208041e6784897af5ef7b169dbd07">
-        <dex dex="C:\Android\Pinboard\app\build\intermediates\pre-dexed\debug\volley-c1e8598f014223b12f05ee584c365e0b94d08b8d.jar" />
+        sha1="81d42bf983a8741f4888a6e333e454e4a5e0eeb7">
+        <dex dex="C:\Users\SAM\Documents\GitHub\Pinboard-Android\Pinboard\app\build\intermediates\pre-dexed\debug\classes-5f8d18191fbd56f195d9a3a19287c3cec00bb14b.jar" />
     </item>
     <item
         jar="C:\Android\Pinboard\app\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\classes.jar"
@@ -28,6 +28,34 @@
         revision="21.1.2"
         sha1="2c91c949a45a21cdecf26e03951e46c7beec9ad8">
         <dex dex="C:\Android\Pinboard\app\build\intermediates\pre-dexed\debug\classes-10d05efe776bc84ac69a45bddf40f70e7a3a5be5.jar" />
+    </item>
+    <item
+        jar="C:\Users\SAM\Documents\GitHub\Pinboard-Android\Pinboard\app\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="2c91c949a45a21cdecf26e03951e46c7beec9ad8">
+        <dex dex="C:\Users\SAM\Documents\GitHub\Pinboard-Android\Pinboard\app\build\intermediates\pre-dexed\debug\classes-771ab6cf0ea8a3bf4293896d7c6b9fe258409997.jar" />
+    </item>
+    <item
+        jar="C:\Android\Pinboard\app\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\libs\internal_impl-21.0.3.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="01ec05bfbafcc07646ba813000bf2ef11742dd03">
+        <dex dex="C:\Android\Pinboard\app\build\intermediates\pre-dexed\debug\internal_impl-21.0.3-9b174e347476c40fb7d4e2b6968ea18e0e57bcc3.jar" />
+    </item>
+    <item
+        jar="C:\Users\SAM\Documents\GitHub\Pinboard-Android\Pinboard\app\libs\volley.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="60a85ca72cf208041e6784897af5ef7b169dbd07">
+        <dex dex="C:\Users\SAM\Documents\GitHub\Pinboard-Android\Pinboard\app\build\intermediates\pre-dexed\debug\volley-84dc6049e3a0a922f60b3ed4560e6661078f6479.jar" />
+    </item>
+    <item
+        jar="C:\Android\Pinboard\app\libs\volley.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="60a85ca72cf208041e6784897af5ef7b169dbd07">
+        <dex dex="C:\Android\Pinboard\app\build\intermediates\pre-dexed\debug\volley-c1e8598f014223b12f05ee584c365e0b94d08b8d.jar" />
     </item>
     <item
         jar="C:\Users\SAM\AppData\Local\Android\sdk\extras\android\m2repository\com\android\support\support-annotations\21.0.3\support-annotations-21.0.3.jar"
