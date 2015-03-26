@@ -7,18 +7,6 @@ import java.util.TimerTask;
 import java.util.UUID;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,6 +18,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import android.app.DownloadManager;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -63,6 +52,8 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.widget.RemoteViews;
 
+import javax.xml.transform.ErrorListener;
+
 public class BleService extends Service{
 	private NotificationManager mNM;
 	BluetoothManager manager;
@@ -75,54 +66,121 @@ public class BleService extends Service{
     int mId = 0;
     private HashMap<String, SparseArray<Content> > devicemap = new HashMap<String, SparseArray<Content> >();
     private HashMap<String, Image > deviceImageMap = new HashMap<String, Image >();
-    private HashMap<String, UpdateContent> updatemap =new  HashMap<String, UpdateContent>();
+    private HashMap<String, UpdateDevice> updateMap =new  HashMap<String, UpdateDevice>();
     Timer timer;
+    private RequestQueue queue;
     //boolean update = false;
+
+    Response.ErrorListener errorListener = new Response.ErrorListener() {
+        @Override
+        public void onErrorResponse(VolleyError error) {
+            Log.d("upload","error" );
+        }
+    };
+
+    Response.Listener ResponseHandler = new Response.Listener<String>() {
+        @Override
+        public void onResponse(String response) {
+            Log.d("upload","response:"+response );
+            JSONObject obj;
+            try {
+                obj = new JSONObject(response);
+
+
+                JSONArray arr = obj.getJSONArray("array");
+                for (int i = 0; i < arr.length(); i++)
+                {
+                    String tmpaddr = arr.getJSONObject(i).getString("address");
+                    if(updateMap.get(tmpaddr)!=null){
+                        UpdateDevice updateDevice = updateMap.get(tmpaddr);
+                        BluetoothDevice tmpDevice = updateDevice.device;
+                        updateDevice.updateList.add(arr.getJSONObject(i).getString("content"));
+                        gattList.add( tmpDevice.connectGatt(mContext, false, newBleCallback() ) );
+                    }
+
+                }
+
+            } catch (JSONException e) {
+
+                e.printStackTrace();
+            }
+
+
+
+        }
+
+
+    };
     
     class UpdateTask implements Runnable {
-    	
-    	String data;
+
+        LinkedList<String> dataList;
     	BluetoothGatt gatt;
     	
-    	UpdateTask(String data,BluetoothGatt gatt) {
-        	this.data = data;
+    	UpdateTask(LinkedList<String> dataList,BluetoothGatt gatt) {
+        	this.dataList = dataList;
     		this.gatt = gatt; 
     		
         }
 
 		@Override
 		public void run() {
-			UUID serviceUUID = UUID.fromString("00002220-0000-1000-8000-00805f9b34fb");
+			UUID serviceUUID = UUID.fromString("00002225-0000-1000-8000-00805f9b34fb");
 			BluetoothGattService tempService = gatt.getService(serviceUUID);
-			BluetoothGattCharacteristic characteristic = tempService.getCharacteristic(UUID.fromString("00002222-0000-1000-8000-00805f9b34fb"));
-			int max =  (int) Math.ceil((double)data.length()/20);
-			for(int i=0;i<max;i++){
+			BluetoothGattCharacteristic characteristic = tempService.getCharacteristic(UUID.fromString("00002226-0000-1000-8000-00805f9b34fb"));
+			for(int j=0;j<dataList.size();j++){
+                String data = dataList.get(j);
+                int max =  (int) Math.ceil((double)data.length()/20);
+                for(int i=0;i<max;i++){
 
-				if(i == max-1){
-					String subdata = data.substring(i*20, data.length() );
-					byte bdata[] = subdata.getBytes();
-					characteristic.setValue(bdata);
-					characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-					gatt.writeCharacteristic(characteristic);
-					
-				}else{
-					String subdata = data.substring(i*20, (i+1)*20);
-					byte bdata[] = subdata.getBytes();
-					characteristic.setValue(bdata);
-					characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-					gatt.writeCharacteristic(characteristic);
-				}
-			}
+                    if(i == max-1){
+                        String subdata = data.substring(i*20, data.length() );
+                        byte bdata[] = subdata.getBytes();
+                        characteristic.setValue(bdata);
+                        characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                        gatt.writeCharacteristic(characteristic);
+
+                        byte endByte[]={(byte)0x00};
+                        characteristic.setValue(endByte);
+                        characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                        gatt.writeCharacteristic(characteristic);
+
+                    }else{
+                        String subdata = data.substring(i*20, (i+1)*20);
+                        byte bdata[] = subdata.getBytes();
+                        characteristic.setValue(bdata);
+                        characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                        gatt.writeCharacteristic(characteristic);
+                    }
+                }
+            }
+
 			try {
-	            
 	            Thread.sleep(1000);
 	         } catch (Exception e) {
 	            System.out.println(e);
 	         }
 			Log.d("response", "thread");
-			updatemap.get(gatt.getDevice().getAddress()).update = false;
+            dataList.clear();
 			gatt.disconnect();
 			new ResetScanTask().execute(true);
+
+            //setsuccess
+            queue.add(new StringRequest(Request.Method.GET,"http://neatxiboard.appspot.com/upload?addr="+gatt.getDevice().getAddress(), new Response.Listener<String>() {
+                @Override
+                public void onResponse(String s) {
+
+                }
+            },errorListener) );
+            //setsuccess
+
+            try {
+                Thread.sleep(10000);
+            } catch (Exception e) {
+                System.out.println(e);
+            }
+
+            updateMap.remove(gatt.getDevice().getAddress());
 
 		}
     	
@@ -189,7 +247,7 @@ public class BleService extends Service{
 
                 if(content.checkComplete() && tempImage.checkComplete() && content.getShowed()==false){
                     content.setShowed(true);
-                    showNotification(content.getFullcontent(),tempImage.getImage());
+                    showNotification(content.getFullcontent(), tempImage.getImage());
                 }
             }
 
@@ -249,13 +307,14 @@ public class BleService extends Service{
         	
         	for (byte b : scanRecord)
         	  msg += String.format("%02x ", b);
-        	Log.d("scanRecord",msg);
+        	//Log.d("scanRecord",msg);
         	
-        	/*if(updatemap.get(device.getAddress())!=null){
-        		if(updatemap.get(device.getAddress()).update){
-        			gattList.add( device.connectGatt(mContext, false, newBleCallback() ) );
-        		}
-        	}*/
+        	if(updateMap.get(device.getAddress())==null){
+                Log.d("upload",device.getAddress());
+                updateMap.put(device.getAddress(),new UpdateDevice(device));
+                queue.add(new StringRequest(Request.Method.GET, "http://neatxiboard.appspot.com/list?addr="+device.getAddress(),ResponseHandler, errorListener) );
+                queue.start();
+        	}
         	
         	Log.d("address",device.getAddress() );
         	new ResetScanTask().execute(true);
@@ -287,10 +346,7 @@ public class BleService extends Service{
     			
     			if (status == BluetoothGatt.GATT_SUCCESS){
     				Log.d("service ", " discover" );
-    				
-					//String newdata = "Hi Hi! I am Sam.\n nice to meet you.%%https://www.facebook.com/xinyuan.cai";
-					
-					new Thread(new UpdateTask(updatemap.get(gatt.getDevice().getAddress()).content,gatt)).start();
+					new Thread(new UpdateTask(updateMap.get(gatt.getDevice().getAddress()).updateList,gatt)).start();
     				
     				
     			}
@@ -340,55 +396,9 @@ public class BleService extends Service{
         startForeground(12, mnotification);
         
         
-        final RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://140.123.107.50/demo/display.php";
+        queue = Volley.newRequestQueue(this);
 
-        // Request a string response from the provided URL.
-        final StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                    new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-            	Log.d("response",response );
-            	JSONObject obj;
-				try {
-					obj = new JSONObject(response);
-					
-
-					JSONArray arr = obj.getJSONArray("array");
-					for (int i = 0; i < arr.length(); i++)
-					{
-						String tmpaddr = arr.getJSONObject(i).getString("address");
-						if(updatemap.get(tmpaddr)==null){
-							updatemap.put(tmpaddr, new UpdateContent(arr.getJSONObject(i).getString("content"),true));
-							Log.d("response","success" );
-						}
-						if(updatemap.get(tmpaddr).content.equals(arr.getJSONObject(i).getString("content")) == false){
-							updatemap.get(tmpaddr).content = arr.getJSONObject(i).getString("content");
-							updatemap.get(tmpaddr).update = true;
-							Log.d("response","success" );
-						}
-					}
-				
-					
-
-
-				} catch (JSONException e) {
-					
-					e.printStackTrace();
-				}
-            	
-            	
-
-            }
-
-
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-            	Log.d("response","error" );
-            }
-        });
-        TimerTask pollingTask = new TimerTask(){
+        /*TimerTask pollingTask = new TimerTask(){
         	@Override
         	public void run() {
         		Log.d("timer","run" );
@@ -398,7 +408,7 @@ public class BleService extends Service{
     	};
         // Add the request to the RequestQueue.
         timer =new Timer();
-        timer.schedule(pollingTask, 0, 10000);
+        timer.schedule(pollingTask, 0, 10000);*/
         
         
 //        showNotification(R.drawable.heart,"�R�߸q��","12/15~12/20���ʤ��߼s��");
@@ -425,11 +435,11 @@ public class BleService extends Service{
 		for(int i=0;i<gattList.size();i++){
 			gattList.pop().disconnect();
 		}
-		timer.cancel();
+		//timer.cancel();
 	}
 	private void showNotification(String content,Bitmap bitmap) {
 		
-		String subcontent[] = content.split("%%");
+		String subcontent[] = content.split("##");
 
 		RemoteViews views = new RemoteViews(getPackageName(), R.layout.notify);  
 		views.setTextViewText(R.id.textView2, subcontent[0]);
