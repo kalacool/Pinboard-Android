@@ -1,5 +1,13 @@
 package com.neat.pinboard;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Timer;
@@ -43,6 +51,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.v4.app.NotificationCompat;
@@ -456,6 +465,44 @@ public class BleService extends Service{
 		}else{
 			resultIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(subcontent[1]));
 		}
+
+        try {
+            File myFile = new File(Environment.getExternalStorageDirectory()+"/pinboard", "history.txt");
+
+            FileInputStream stream = new FileInputStream(myFile);
+            String jsonStr = null;
+            try {
+                FileChannel fc = stream.getChannel();
+                MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+
+                jsonStr = Charset.defaultCharset().decode(bb).toString();
+            }
+            finally {
+                stream.close();
+            }
+
+            JSONObject jsonObj = new JSONObject(jsonStr);
+
+            // Getting data JSON Array nodes
+            JSONArray data  = jsonObj.getJSONArray("history");
+            JSONObject newJsonObj = new JSONObject();
+            newJsonObj.put("content",subcontent[0]);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+            String currentDateandTime = sdf.format(new Date());
+            newJsonObj.put("date",currentDateandTime);
+            data.put(newJsonObj);
+
+            FileWriter fw = new FileWriter(myFile,false);
+            fw.write(jsonObj.toString());
+            fw.close();
+
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
 		
         
 

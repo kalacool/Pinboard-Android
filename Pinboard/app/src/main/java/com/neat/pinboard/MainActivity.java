@@ -1,11 +1,25 @@
 package com.neat.pinboard;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -21,9 +35,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.Switch;
 import android.widget.TextView;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
@@ -44,6 +65,9 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
     ViewPager mViewPager;
     static Intent mService;
     static Switch service;
+    static ListView listView;
+    static ArrayList<HashMap<String,String>> list;
+    static SimpleAdapter mSimpleAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,11 +141,86 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.refresh) {
+            refresh();
+            return true;
+        }else if(id == R.id.clear){
+            File myFile = new File(Environment.getExternalStorageDirectory()+"/pinboard", "history.txt");
+
+            try {
+                FileWriter fw = new FileWriter(myFile);
+                JSONArray newJsonArray = new JSONArray();
+                JSONObject newJsonObject = new JSONObject();
+                newJsonObject.put("history",newJsonArray);
+                fw.write(newJsonObject.toString());
+                fw.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            this.runOnUiThread(new Runnable() {
+                public void run()
+                {
+                    list.clear();
+                    mSimpleAdapter.notifyDataSetChanged();
+                }
+            });
+
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+    public void refresh(){
+        try {
+            File myFile = new File(Environment.getExternalStorageDirectory() + "/pinboard", "history.txt");
+            FileInputStream stream = new FileInputStream(myFile);
+            String jsonStr = null;
+            try {
+                FileChannel fc = stream.getChannel();
+                MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+
+                jsonStr = Charset.defaultCharset().decode(bb).toString();
+            } finally {
+                stream.close();
+            }
+
+            JSONObject jsonObj = new JSONObject(jsonStr);
+
+            // Getting data JSON Array nodes
+            JSONArray data = jsonObj.getJSONArray("history");
+            list.clear();
+            // looping through All nodes
+            for (int i = 0; i < data.length(); i++) {
+                JSONObject c = data.getJSONObject(i);
+
+                String content = c.getString("content");
+                String date = c.getString("date");
+
+                // tmp hashmap for single node
+                final HashMap<String, String> parsedData = new HashMap<String, String>();
+
+                // adding each child node to HashMap key => value
+                parsedData.put("content", content);
+                parsedData.put("date", date);
+
+                this.runOnUiThread(new Runnable() {
+                    public void run()
+                    {
+                        list.add(parsedData);
+                        mSimpleAdapter.notifyDataSetChanged();
+                    }
+                });
+
+
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override
@@ -210,6 +309,68 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
                 service.setOnCheckedChangeListener(this);
             }else{
                 rootView = inflater.inflate(R.layout.fragment_list, container, false);
+                listView = (ListView) rootView.findViewById(R.id.listView);
+                list = new ArrayList<HashMap<String,String> >();
+                mSimpleAdapter = new SimpleAdapter(
+                        this.getActivity(),
+                        list,
+                        android.R.layout.simple_list_item_2,
+                        new String[] { "content","date" },
+                        new int[] { android.R.id.text1, android.R.id.text2 } );
+                listView.setAdapter( mSimpleAdapter);
+
+                try {
+                    File myFile = new File(Environment.getExternalStorageDirectory()+"/pinboard", "history.txt");
+
+                    if(!myFile.exists()){
+                        myFile.createNewFile();
+                        FileWriter fw = new FileWriter(myFile);
+                        JSONArray newJsonArray = new JSONArray();
+                        JSONObject newJsonObject = new JSONObject();
+                        newJsonObject.put("history",newJsonArray);
+                        fw.write(newJsonObject.toString());
+                        fw.close();
+                    }
+                    FileInputStream stream = new FileInputStream(myFile);
+                    String jsonStr = null;
+                    try {
+                        FileChannel fc = stream.getChannel();
+                        MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+
+                        jsonStr = Charset.defaultCharset().decode(bb).toString();
+                    }
+                    finally {
+                        stream.close();
+                    }
+
+                    JSONObject jsonObj = new JSONObject(jsonStr);
+
+                    // Getting data JSON Array nodes
+                    JSONArray data  = jsonObj.getJSONArray("history");
+
+                    // looping through All nodes
+                    for (int i = 0; i < data.length(); i++) {
+                        JSONObject c = data.getJSONObject(i);
+
+                        String content = c.getString("content");
+                        String date = c.getString("date");
+
+                        // tmp hashmap for single node
+                        HashMap<String, String> parsedData = new HashMap<String, String>();
+
+                        // adding each child node to HashMap key => value
+                        parsedData.put("content", content);
+                        parsedData.put("date", date);
+
+                        list.add(parsedData);
+
+                    }
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
             }
 
             return rootView;
