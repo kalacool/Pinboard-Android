@@ -324,6 +324,10 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
                 listView.setAdapter( mSimpleAdapter);
 
                 try {
+                    File dir = new File(Environment.getExternalStorageDirectory()+"/pinboard");
+                    if(!dir.exists()){
+                        dir.mkdir();
+                    }
                     File myFile = new File(Environment.getExternalStorageDirectory()+"/pinboard", "history.txt");
 
                     if(!myFile.exists()){
