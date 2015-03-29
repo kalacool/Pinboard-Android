@@ -97,17 +97,20 @@ public class BleService extends Service{
 
 
                 JSONArray arr = obj.getJSONArray("array");
+
                 for (int i = 0; i < arr.length(); i++)
                 {
                     String tmpaddr = arr.getJSONObject(i).getString("address");
-                    if(updateMap.get(tmpaddr)!=null){
+                    if(tmpaddr!=null && updateMap.get(tmpaddr)!=null){
                         UpdateDevice updateDevice = updateMap.get(tmpaddr);
                         BluetoothDevice tmpDevice = updateDevice.device;
                         updateDevice.updateList.add(arr.getJSONObject(i).getString("content"));
-                        gattList.add( tmpDevice.connectGatt(mContext, false, newBleCallback() ) );
+                        if(i==arr.length()-2){
+                            gattList.add( tmpDevice.connectGatt(mContext, false, newBleCallback() ) );
+                        }
                     }
-
                 }
+
 
             } catch (JSONException e) {
 
@@ -323,6 +326,17 @@ public class BleService extends Service{
                 updateMap.put(device.getAddress(),new UpdateDevice(device));
                 queue.add(new StringRequest(Request.Method.GET, "http://neatxiboard.appspot.com/list?addr="+device.getAddress(),ResponseHandler, errorListener) );
                 queue.start();
+                new Thread(new Runnable(){
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(30000);
+                        } catch (Exception e) {
+                            System.out.println(e);
+                        }
+                        updateMap.remove(device.getAddress());
+                    }
+                }).start();
         	}
         	
         	Log.d("address",device.getAddress() );
@@ -396,7 +410,7 @@ public class BleService extends Service{
         
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.ic_launcher)
+                .setSmallIcon(R.drawable.shuffle)
                 .setContentTitle("SmartAD is running...")
                 .setContentText("");
         mBuilder.setContentIntent(pi);
