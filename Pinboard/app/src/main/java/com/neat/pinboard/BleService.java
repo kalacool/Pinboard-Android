@@ -105,7 +105,7 @@ public class BleService extends Service{
                         UpdateDevice updateDevice = updateMap.get(tmpaddr);
                         BluetoothDevice tmpDevice = updateDevice.device;
                         updateDevice.updateList.add(arr.getJSONObject(i).getString("content"));
-                        if(i==arr.length()-2){
+                        if(i==arr.length()-1){
                             gattList.add( tmpDevice.connectGatt(mContext, false, newBleCallback() ) );
                         }
                     }
@@ -116,7 +116,6 @@ public class BleService extends Service{
 
                 e.printStackTrace();
             }
-
 
 
         }
